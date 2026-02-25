@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZEFRAM TEXT LIBRARY</title>
+    <style>
+        :root {
+            --neon-blue: #00f2ff;
+            --bg-black: #000000;
+            --text-main: #ffffff;
+            --text-dim: #666666;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            background-color: var(--bg-black);
+            color: var(--text-main);
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-user-select: none;
+        }
+
+        /* ヘッダー：文字のみ */
+        .header {
+            position: sticky;
+            top: 0;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+        }
+
+        .back-btn { 
+            position: absolute;
+            left: 16px;
+            color: var(--neon-blue); 
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        .nav-title { font-size: 15px; font-weight: 800; letter-spacing: 2px; }
+
+        /* リスト：文字の余白で読ませる */
+        .content-area { padding-bottom: 80px; }
+
+        .list-item {
+            padding: 20px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .list-item:active { background: rgba(255, 255, 255, 0.05); }
+
+        .song-title { 
+            font-size: 16px; 
+            font-weight: 500; 
+            letter-spacing: 0.5px;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .playlist-info {
+            font-size: 11px;
+            color: var(--neon-blue);
+            margin-top: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .meta-text { 
+            font-size: 14px; 
+            color: var(--text-dim); 
+            margin-left: 15px;
+            font-family: 'Helvetica Neue', sans-serif;
+        }
+
+        /* 下部タブバー：完全に文字のみ */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background: #000;
+            display: flex;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .tab-item {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            transition: 0.3s;
+        }
+
+        .tab-item.active { color: var(--neon-blue); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="back-btn hidden" id="back-btn" onclick="goBack()">BACK</div>
+        <div class="nav-title" id="current-view-title">PLAYLISTS</div>
+    </header>
+
+    <div class="content-area">
+        <div id="playlist-view">
+            <div class="list-item" onclick="showFolder('学年別')">
+                <div class="song-title">学年別</div>
+                <div class="meta-text">LIST</div>
+            </div>
+            <div class="list-item" onclick="showFolder('ルーティン')">
+                <div class="song-title">ルーティン</div>
+                <div class="meta-text">LIST</div>
+            </div>
+        </div>
+
+        <div id="music-view" class="hidden">
+            <div class="list-item">
+                <div>
+                    <div class="song-title">How We Do (Instrumental)</div>
+                    <div class="playlist-info">学年別</div>
+                </div>
+                <div class="meta-text">4:04</div>
+            </div>
+            <div class="list-item">
+                <div>
+                    <div class="song-title">[EXILE] SOMEDAY short mix</div>
+                    <div class="playlist-info">学年別</div>
+                </div>
+                <div class="meta-text">2:32</div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="tab-bar">
+        <div class="tab-item active" id="tab-playlist" onclick="switchTab('playlist')">PLAYLISTS</div>
+        <div class="tab-item" id="tab-music" onclick="switchTab('all')">MY MUSIC</div>
+    </nav>
+
+    <script>
+        const pView = document.getElementById('playlist-view');
+        const mView = document.getElementById('music-view');
+        const vTitle = document.getElementById('current-view-title');
+        const bBtn = document.getElementById('back-btn');
+        const tPlaylist = document.getElementById('tab-playlist');
+        const tMusic = document.getElementById('tab-music');
+
+        function switchTab(type) {
+            bBtn.classList.add('hidden');
+            if(type === 'playlist') {
+                pView.classList.remove('hidden');
+                mView.classList.add('hidden');
+                vTitle.textContent = "PLAYLISTS";
+                tPlaylist.classList.add('active');
+                tMusic.classList.remove('active');
+            } else {
+                pView.classList.add('hidden');
+                mView.classList.remove('hidden');
+                vTitle.textContent = "MY MUSIC";
+                tPlaylist.classList.remove('active');
+                tMusic.classList.add('active');
+            }
+        }
+
+        function showFolder(name) {
+            pView.classList.add('hidden');
+            mView.classList.remove('hidden');
+            vTitle.textContent = name;
+            bBtn.classList.remove('hidden');
+        }
+
+        function goBack() {
+            switchTab('playlist');
+        }
+    </script>
+</body>
+</html>
