@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <link rel="apple-touch-icon" href="icon.png">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ZEFRAM">
@@ -17,7 +16,7 @@
             --bg-black: #000000;
             --text-main: #ffffff;
             --text-dim: #666666;
-            --border-color: rgba(0, 242, 255, 0.15);
+            --border-color: rgba(0, 242, 255, 0.2);
         }
 
         body {
@@ -28,7 +27,6 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            /* アプリモード時の上部余白調整 */
             padding-top: env(safe-area-inset-top);
         }
 
@@ -70,6 +68,7 @@
         .song-title { font-size: 15px; flex-grow: 1; }
         .playing-now { color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 8px var(--neon-blue); }
         .folder-tag { font-size: 10px; color: var(--neon-blue); opacity: 0.6; margin-top: 4px; }
+        .status-msg { text-align: center; padding: 40px; color: var(--text-dim); font-size: 12px; }
 
         .tab-bar {
             height: 60px;
@@ -101,10 +100,12 @@
 
     <div class="action-area">
         <button class="import-trigger" onclick="document.getElementById('file-input').click()">選 曲</button>
-        <input type="file" id="file-input" class="hidden" accept="audio/*" multiple onchange="handleFiles(this.files)">
+        <input type="file" id="file-input" class="hidden" accept=".mp3,.m4a,.wav,.aac,.caf,audio/*" multiple onchange="handleFiles(this.files)">
     </div>
 
-    <div id="list-container" class="list-container"></div>
+    <div id="list-container" class="list-container">
+        <div class="status-msg">「選 曲」ボタンでNumbers内の<br>全曲を選択してください</div>
+    </div>
 
     <nav class="tab-bar">
         <div id="tab-playlists" class="tab-item active" onclick="switchTab('playlists')">PLAYLISTS</div>
@@ -123,6 +124,17 @@
         const listContainer = document.getElementById('list-container');
         const audio = document.getElementById('audio-player');
 
+        // 起動時に保存されたリストを読み込む
+        window.onload = () => {
+            const savedData = localStorage.getItem('zeframe_list_data');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                allSongs = parsed.allSongs || [];
+                playlistData = parsed.playlistData || {};
+                render();
+            }
+        };
+
         async function handleFiles(files) {
             if (files.length === 0) return;
             allSongs = [];
@@ -130,18 +142,34 @@
 
             for (const file of files) {
                 const fileURL = URL.createObjectURL(file);
-                // フォルダ構造の解析（webkitRelativePathを優先）
+                // フォルダ構造の解析（スマホでも取れるようにフォールバック設定）
                 let folderName = "LDH";
                 if (file.webkitRelativePath && file.webkitRelativePath.includes('/')) {
                     folderName = file.webkitRelativePath.split('/')[0];
                 }
-                const song = { title: file.name.replace(/\.[^/.]+$/, ""), file: fileURL, folder: folderName };
+                const song = { 
+                    title: file.name.replace(/\.[^/.]+$/, ""), 
+                    file: fileURL, 
+                    folder: folderName,
+                    name: file.name 
+                };
                 
                 allSongs.push(song);
                 if (!playlistData[folderName]) playlistData[folderName] = [];
                 playlistData[folderName].push(song);
             }
             allSongs.sort((a, b) => a.title.localeCompare(b.title, 'ja'));
+            
+            // リスト構成をiPhoneに保存（URL以外）
+            const dataToSave = { 
+                allSongs: allSongs.map(s => ({...s, file: null})), // URLは毎回変わるため保存しない
+                playlistData: {} 
+            };
+            Object.keys(playlistData).forEach(k => {
+                dataToSave.playlistData[k] = playlistData[k].map(s => ({...s, file: null}));
+            });
+            localStorage.setItem('zeframe_list_data', JSON.stringify(dataToSave));
+
             render();
         }
 
@@ -164,6 +192,10 @@
                     document.getElementById('lib-title').textContent = currentFolder.toUpperCase();
                     renderSongs(playlistData[currentFolder]);
                 } else {
+                    if (Object.keys(playlistData).length === 0) {
+                        listContainer.innerHTML = '<div class="status-msg">フォルダがありません</div>';
+                        return;
+                    }
                     Object.keys(playlistData).forEach(folder => {
                         const item = document.createElement('div');
                         item.className = 'list-item';
@@ -174,6 +206,10 @@
                 }
             } else {
                 document.getElementById('lib-title').textContent = "MY MUSIC";
+                if (allSongs.length === 0) {
+                    listContainer.innerHTML = '<div class="status-msg">曲がありません</div>';
+                    return;
+                }
                 renderSongs(allSongs, true);
             }
         }
@@ -183,14 +219,24 @@
                 const item = document.createElement('div');
                 item.className = 'list-item';
                 const isPlaying = currentPlayingUrl === song.file && !audio.paused;
+                
+                // ファイルURLがない（記憶されたリスト）場合は、少し暗く表示
+                const isDisabled = !song.file;
+
                 item.innerHTML = `
-                    <div>
+                    <div style="opacity: ${isDisabled ? '0.5' : '1'}">
                         <div class="song-title ${isPlaying ? 'playing-now' : ''}">${song.title}</div>
                         ${showFolder ? `<div class="folder-tag">${song.folder}</div>` : ''}
                     </div>
-                    <div class="playing-now">${isPlaying ? '||' : '▶'}</div>
+                    <div class="playing-now">${isPlaying ? '||' : (isDisabled ? '?' : '▶')}</div>
                 `;
-                item.onclick = () => playSong(song);
+                item.onclick = () => {
+                    if (isDisabled) {
+                        alert("セキュリティのため、もう一度「選 曲」ボタンで音楽ファイルを選択してください。");
+                    } else {
+                        playSong(song);
+                    }
+                };
                 listContainer.appendChild(item);
             });
         }
