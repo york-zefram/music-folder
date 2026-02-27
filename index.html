@@ -3,6 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ZEFRAM">
+
     <title>ZEFRAM LIST</title>
     <style>
         :root {
@@ -10,7 +17,7 @@
             --bg-black: #000000;
             --text-main: #ffffff;
             --text-dim: #666666;
-            --border-color: rgba(255, 255, 255, 0.15);
+            --border-color: rgba(0, 242, 255, 0.15);
         }
 
         body {
@@ -21,9 +28,10 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            /* アプリモード時の上部余白調整 */
+            padding-top: env(safe-area-inset-top);
         }
 
-        /* --- ヘッダー --- */
         .header {
             height: 60px;
             display: flex;
@@ -36,7 +44,6 @@
         .back-btn { position: absolute; left: 16px; color: var(--neon-blue); font-size: 14px; font-weight: bold; }
         .nav-title { font-size: 14px; font-weight: 800; letter-spacing: 2px; }
 
-        /* --- アクション --- */
         .action-area { padding: 12px; border-bottom: 1px solid var(--border-color); }
         .import-trigger {
             width: 100%;
@@ -48,9 +55,9 @@
             font-weight: 800;
             letter-spacing: 4px;
             border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.1);
         }
 
-        /* --- リスト --- */
         .list-container { flex-grow: 1; overflow-y: auto; }
         .list-item {
             padding: 16px;
@@ -61,15 +68,15 @@
         }
         .list-item:active { background: rgba(0, 242, 255, 0.1); }
         .song-title { font-size: 15px; flex-grow: 1; }
-        .playing-now { color: var(--neon-blue); font-weight: bold; }
+        .playing-now { color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 8px var(--neon-blue); }
         .folder-tag { font-size: 10px; color: var(--neon-blue); opacity: 0.6; margin-top: 4px; }
 
-        /* --- タブ --- */
         .tab-bar {
             height: 60px;
             display: flex;
             border-top: 1px solid var(--border-color);
             background: #000;
+            padding-bottom: env(safe-area-inset-bottom);
         }
         .tab-item {
             flex: 1;
@@ -123,7 +130,11 @@
 
             for (const file of files) {
                 const fileURL = URL.createObjectURL(file);
-                const folderName = file.webkitRelativePath ? file.webkitRelativePath.split('/')[0] : "Numbers";
+                // フォルダ構造の解析（webkitRelativePathを優先）
+                let folderName = "LDH";
+                if (file.webkitRelativePath && file.webkitRelativePath.includes('/')) {
+                    folderName = file.webkitRelativePath.split('/')[0];
+                }
                 const song = { title: file.name.replace(/\.[^/.]+$/, ""), file: fileURL, folder: folderName };
                 
                 allSongs.push(song);
