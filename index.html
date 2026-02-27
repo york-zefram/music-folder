@@ -120,13 +120,10 @@
 
     <script>
         // --- 1. データ管理 ---
+        // 初期のダミーデータ
         const libraryData = {
             "学年別": [
-                { title: "How We Do (Instrumental)", file: "music/howwedo.mp3", time: "4:04", a: 10, b: 60 },
-                { title: "[EXILE] SOMEDAY short mix", file: "music/someday.mp3", time: "2:32", a: 5, b: 30 }
-            ],
-            "ルーティン": [
-                { title: "POLO REMIX 202509", file: "music/polo.mp3", time: "5:58", a: 0, b: 0 }
+                { title: "How We Do (Instrumental)", file: "music/howwedo.mp3", time: "4:04", a: 10, b: 60 }
             ]
         };
 
@@ -136,7 +133,7 @@
         const audio = document.getElementById('audio-player');
         const playerScreen = document.getElementById('player-screen');
 
-        // --- 2. ファイル読み込みロジック ---
+        // --- 2. ファイル読み込み・プレイリスト化ロジック ---
         function triggerFilePicker() {
             document.getElementById('file-input').click();
         }
@@ -144,16 +141,16 @@
         async function handleFiles(files) {
             if (files.length === 0) return;
 
-            if (!libraryData["ダウンロード"]) {
-                libraryData["ダウンロード"] = [];
-            }
+            // 「LDH / EXILE」というプレイリスト名を自動作成
+            const playlistName = "LDH / EXILE";
+            libraryData[playlistName] = [];
 
             for (const file of files) {
                 const fileURL = URL.createObjectURL(file);
                 const duration = await getAudioDuration(fileURL);
                 
-                libraryData["ダウンロード"].push({
-                    title: file.name.replace(/\.[^/.]+$/, ""),
+                libraryData[playlistName].push({
+                    title: file.name.replace(/\.[^/.]+$/, ""), // 拡張子を消す
                     file: fileURL,
                     time: duration,
                     a: 0,
@@ -161,8 +158,8 @@
                 });
             }
 
-            renderPlaylists();
-            alert(files.length + "曲を読み込みました。プレイリスト「ダウンロード」を確認してください。");
+            renderPlaylists(); // 画面を更新
+            alert(playlistName + " として " + files.length + "曲をプレイリスト化しました。");
         }
 
         function getAudioDuration(url) {
@@ -173,6 +170,8 @@
                     const sec = Math.floor(tempAudio.duration % 60).toString().padStart(2, '0');
                     resolve(`${min}:${sec}`);
                 });
+                // 読み込みエラー対策
+                tempAudio.addEventListener('error', () => resolve("0:00"));
             });
         }
 
@@ -206,7 +205,7 @@
         // --- 4. 再生制御ロジック ---
         function openPlayer(song) {
             document.getElementById('playing-song-title').textContent = song.title;
-            document.getElementById('playing-meta').textContent = `TIME: ${song.time} / LOOP: ${song.a}-${song.b}`;
+            document.getElementById('playing-meta').textContent = `TIME: ${song.time}`;
             
             audio.src = song.file;
             playerScreen.classList.remove('hidden');
