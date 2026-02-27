@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZEFRAM INTEGRATED SE</title>
+    <title>ZEFRAM LIST</title>
     <style>
         :root {
             --neon-blue: #00f2ff;
             --bg-black: #000000;
             --text-main: #ffffff;
             --text-dim: #666666;
-            --border-color: rgba(255, 255, 255, 0.08);
+            --border-color: rgba(255, 255, 255, 0.15);
         }
 
         body {
@@ -18,221 +18,188 @@
             color: var(--text-main);
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
 
-        /* --- 画面制御 --- */
-        .screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-black);
-            transition: transform 0.3s ease-out;
-            z-index: 10;
-        }
-        .screen.hidden { transform: translateY(100%); }
-
-        /* --- 管理画面 (Library) --- */
-        #library-screen { z-index: 20; display: flex; flex-direction: column; }
-        .header { height: 60px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
-        .back-btn { position: absolute; left: 16px; color: var(--neon-blue); font-size: 14px; font-weight: bold; cursor: pointer; }
-        .nav-title { font-size: 15px; font-weight: 800; letter-spacing: 2px; }
-        
-        /* 選曲アクションエリア */
-        .action-area {
-            padding: 12px 16px;
+        /* --- ヘッダー --- */
+        .header {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-bottom: 1px solid var(--border-color);
-            background: rgba(255, 255, 255, 0.02);
+            position: relative;
+            flex-shrink: 0;
         }
+        .back-btn { position: absolute; left: 16px; color: var(--neon-blue); font-size: 14px; font-weight: bold; }
+        .nav-title { font-size: 14px; font-weight: 800; letter-spacing: 2px; }
+
+        /* --- アクション --- */
+        .action-area { padding: 12px; border-bottom: 1px solid var(--border-color); }
         .import-trigger {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background: transparent;
             border: 1px solid var(--neon-blue);
             color: var(--neon-blue);
-            font-family: inherit;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 800;
-            letter-spacing: 2px;
+            letter-spacing: 4px;
             border-radius: 4px;
-            box-shadow: 0 0 8px rgba(0, 242, 255, 0.1);
         }
 
-        .list-container { flex-grow: 1; overflow-y: auto; padding-bottom: 80px; }
-        .list-item { padding: 20px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: baseline; }
-        .list-item:active { background: rgba(255, 255, 255, 0.1); }
-        .song-title { font-size: 16px; font-weight: 500; }
-        .meta-text { font-size: 14px; color: var(--text-dim); }
+        /* --- リスト --- */
+        .list-container { flex-grow: 1; overflow-y: auto; }
+        .list-item {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .list-item:active { background: rgba(0, 242, 255, 0.1); }
+        .song-title { font-size: 15px; flex-grow: 1; }
+        .playing-now { color: var(--neon-blue); font-weight: bold; }
+        .folder-tag { font-size: 10px; color: var(--neon-blue); opacity: 0.6; margin-top: 4px; }
 
-        .tab-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; border-top: 1px solid var(--border-color); z-index: 30; }
-        .tab-item { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; color: var(--text-dim); }
-        .tab-item.active { color: var(--neon-blue); }
+        /* --- タブ --- */
+        .tab-bar {
+            height: 60px;
+            display: flex;
+            border-top: 1px solid var(--border-color);
+            background: #000;
+        }
+        .tab-item {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 900;
+            color: var(--text-dim);
+        }
+        .tab-item.active { color: var(--neon-blue); border-top: 2px solid var(--neon-blue); }
 
-        /* --- 再生画面 (Player) --- */
-        #player-screen { z-index: 40; background: radial-gradient(circle at center, #0a111a 0%, #000 100%); display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 20px; }
-        .player-title { color: var(--neon-blue); font-size: 14px; font-weight: bold; text-shadow: 0 0 10px var(--neon-blue); }
-        .now-playing { text-align: center; }
-        .now-playing h2 { font-size: 20px; margin: 10px 0; }
-        .controls { display: flex; gap: 30px; align-items: center; }
-        .play-btn { width: 60px; height: 60px; border: 2px solid var(--neon-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); }
-        .close-player { margin-top: 20px; color: var(--text-dim); font-size: 12px; text-decoration: underline; }
-
-        .hidden-el { display: none !important; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="library-screen" class="screen">
-        <header class="header">
-            <div id="lib-back" class="back-btn hidden-el" onclick="renderPlaylists()">BACK</div>
-            <div id="lib-title" class="nav-title">PLAYLISTS</div>
-        </header>
+    <header class="header">
+        <div id="lib-back" class="back-btn hidden" onclick="backToPlaylists()">BACK</div>
+        <div id="lib-title" class="nav-title">PLAYLISTS</div>
+    </header>
 
-        <div class="action-area">
-            <button class="import-trigger" onclick="triggerFilePicker()">選 曲</button>
-            <input type="file" id="file-input" class="hidden-el" accept="audio/*" multiple onchange="handleFiles(this.files)">
-        </div>
-
-        <div id="list-container" class="list-container"></div>
-
-        <nav class="tab-bar">
-            <div class="tab-item active">PLAYLISTS</div>
-            <div class="tab-item" onclick="alert('全曲リスト表示ロジックへ')">MY MUSIC</div>
-        </nav>
+    <div class="action-area">
+        <button class="import-trigger" onclick="document.getElementById('file-input').click()">選 曲</button>
+        <input type="file" id="file-input" class="hidden" accept="audio/*" multiple onchange="handleFiles(this.files)">
     </div>
 
-    <div id="player-screen" class="screen hidden">
-        <div class="player-title">ZEFRAM PLAYER NEO</div>
-        <div class="now-playing">
-            <h2 id="playing-song-title">Song Title</h2>
-            <div id="playing-meta" style="color: var(--neon-blue); font-size: 12px;">ARTIST - 00:00</div>
-        </div>
-        
-        <div class="controls">
-            <div onclick="skip(-5)" style="color:var(--neon-blue); cursor:pointer;">◀◀</div>
-            <div id="play-pause" class="play-btn" onclick="togglePlay()">▶</div>
-            <div onclick="skip(5)" style="color:var(--neon-blue); cursor:pointer;">▶▶</div>
-        </div>
+    <div id="list-container" class="list-container"></div>
 
-        <div class="close-player" onclick="closePlayer()">LISTに戻る</div>
-    </div>
+    <nav class="tab-bar">
+        <div id="tab-playlists" class="tab-item active" onclick="switchTab('playlists')">PLAYLISTS</div>
+        <div id="tab-mymusic" class="tab-item" onclick="switchTab('mymusic')">MY MUSIC</div>
+    </nav>
 
     <audio id="audio-player"></audio>
 
     <script>
-        // --- 1. データ管理 ---
-        // 初期のダミーデータ
-        const libraryData = {
-            "学年別": [
-                { title: "How We Do (Instrumental)", file: "music/howwedo.mp3", time: "4:04", a: 10, b: 60 }
-            ]
-        };
+        let allSongs = [];
+        let playlistData = {};
+        let currentTab = 'playlists';
+        let currentFolder = null;
+        let currentPlayingUrl = null;
 
         const listContainer = document.getElementById('list-container');
-        const libTitle = document.getElementById('lib-title');
-        const libBack = document.getElementById('lib-back');
         const audio = document.getElementById('audio-player');
-        const playerScreen = document.getElementById('player-screen');
-
-        // --- 2. ファイル読み込み・プレイリスト化ロジック ---
-        function triggerFilePicker() {
-            document.getElementById('file-input').click();
-        }
 
         async function handleFiles(files) {
             if (files.length === 0) return;
-
-            // 「LDH / EXILE」というプレイリスト名を自動作成
-            const playlistName = "LDH / EXILE";
-            libraryData[playlistName] = [];
+            allSongs = [];
+            playlistData = {};
 
             for (const file of files) {
                 const fileURL = URL.createObjectURL(file);
-                const duration = await getAudioDuration(fileURL);
+                const folderName = file.webkitRelativePath ? file.webkitRelativePath.split('/')[0] : "Numbers";
+                const song = { title: file.name.replace(/\.[^/.]+$/, ""), file: fileURL, folder: folderName };
                 
-                libraryData[playlistName].push({
-                    title: file.name.replace(/\.[^/.]+$/, ""), // 拡張子を消す
-                    file: fileURL,
-                    time: duration,
-                    a: 0,
-                    b: 0
-                });
+                allSongs.push(song);
+                if (!playlistData[folderName]) playlistData[folderName] = [];
+                playlistData[folderName].push(song);
             }
-
-            renderPlaylists(); // 画面を更新
-            alert(playlistName + " として " + files.length + "曲をプレイリスト化しました。");
+            allSongs.sort((a, b) => a.title.localeCompare(b.title, 'ja'));
+            render();
         }
 
-        function getAudioDuration(url) {
-            return new Promise((resolve) => {
-                const tempAudio = new Audio(url);
-                tempAudio.addEventListener('loadedmetadata', () => {
-                    const min = Math.floor(tempAudio.duration / 60);
-                    const sec = Math.floor(tempAudio.duration % 60).toString().padStart(2, '0');
-                    resolve(`${min}:${sec}`);
-                });
-                // 読み込みエラー対策
-                tempAudio.addEventListener('error', () => resolve("0:00"));
-            });
+        function switchTab(tab) {
+            currentTab = tab;
+            currentFolder = null;
+            document.getElementById('tab-playlists').classList.toggle('active', tab === 'playlists');
+            document.getElementById('tab-mymusic').classList.toggle('active', tab === 'mymusic');
+            render();
         }
 
-        // --- 3. 描画ロジック ---
-        function renderPlaylists() {
-            libBack.classList.add('hidden-el');
-            libTitle.textContent = "PLAYLISTS";
+        function render() {
             listContainer.innerHTML = '';
-            Object.keys(libraryData).forEach(name => {
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                item.innerHTML = `<div class="song-title">${name}</div><div class="meta-text">LIST</div>`;
-                item.onclick = () => renderSongs(name);
-                listContainer.appendChild(item);
-            });
-        }
+            document.getElementById('lib-back').classList.add('hidden');
 
-        function renderSongs(playlistName) {
-            libBack.classList.remove('hidden-el');
-            libTitle.textContent = playlistName.toUpperCase();
-            listContainer.innerHTML = '';
-            libraryData[playlistName].forEach(song => {
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                item.innerHTML = `<div><div class="song-title">${song.title}</div></div><div class="meta-text">${song.time}</div>`;
-                item.onclick = () => openPlayer(song);
-                listContainer.appendChild(item);
-            });
-        }
-
-        // --- 4. 再生制御ロジック ---
-        function openPlayer(song) {
-            document.getElementById('playing-song-title').textContent = song.title;
-            document.getElementById('playing-meta').textContent = `TIME: ${song.time}`;
-            
-            audio.src = song.file;
-            playerScreen.classList.remove('hidden');
-            audio.play();
-            document.getElementById('play-pause').textContent = '||';
-        }
-
-        function closePlayer() {
-            playerScreen.classList.add('hidden');
-            audio.pause();
-        }
-
-        function togglePlay() {
-            const btn = document.getElementById('play-pause');
-            if (audio.paused) {
-                audio.play();
-                btn.textContent = '||';
+            if (currentTab === 'playlists') {
+                document.getElementById('lib-title').textContent = "PLAYLISTS";
+                if (currentFolder) {
+                    document.getElementById('lib-back').classList.remove('hidden');
+                    document.getElementById('lib-title').textContent = currentFolder.toUpperCase();
+                    renderSongs(playlistData[currentFolder]);
+                } else {
+                    Object.keys(playlistData).forEach(folder => {
+                        const item = document.createElement('div');
+                        item.className = 'list-item';
+                        item.innerHTML = `<span>${folder}</span><span style="color:var(--text-dim)">FOLDER</span>`;
+                        item.onclick = () => { currentFolder = folder; render(); };
+                        listContainer.appendChild(item);
+                    });
+                }
             } else {
-                audio.pause();
-                btn.textContent = '▶';
+                document.getElementById('lib-title').textContent = "MY MUSIC";
+                renderSongs(allSongs, true);
             }
         }
 
-        function skip(sec) { audio.currentTime += sec; }
+        function renderSongs(songs, showFolder = false) {
+            songs.forEach(song => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                const isPlaying = currentPlayingUrl === song.file && !audio.paused;
+                item.innerHTML = `
+                    <div>
+                        <div class="song-title ${isPlaying ? 'playing-now' : ''}">${song.title}</div>
+                        ${showFolder ? `<div class="folder-tag">${song.folder}</div>` : ''}
+                    </div>
+                    <div class="playing-now">${isPlaying ? '||' : '▶'}</div>
+                `;
+                item.onclick = () => playSong(song);
+                listContainer.appendChild(item);
+            });
+        }
 
-        // 初期起動
-        renderPlaylists();
+        function playSong(song) {
+            if (audio.src === song.file) {
+                if (audio.paused) audio.play();
+                else audio.pause();
+            } else {
+                audio.src = song.file;
+                currentPlayingUrl = song.file;
+                audio.play();
+            }
+            render();
+        }
+
+        function backToPlaylists() { currentFolder = null; render(); }
+        audio.onplay = render;
+        audio.onpause = render;
+        audio.onended = () => { currentPlayingUrl = null; render(); };
     </script>
 </body>
 </html>
